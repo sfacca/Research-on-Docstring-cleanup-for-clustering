@@ -7,7 +7,7 @@ end
 
 function aux_app_stm(x, stemmer)
     t = TextAnalysis.StringDocument(x)
-    stem!(t, stemmer)
+    stem!(stemmer, t)
     t.text
 end
 

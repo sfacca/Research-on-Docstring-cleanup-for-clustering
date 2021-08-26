@@ -1,3 +1,21 @@
+
+module IEP
+
+    using CSTParser
+mutable struct doc_fun_block
+    doc::String
+    fun::String
+    block::CSTParser.EXPR
+    doc_fun_block(doc::String,fun::String) = new(doc, fun, CSTParser.parse(""));
+    doc_fun_block(doc::Nothing,fun::String) = new("", fun);
+    doc_fun_block(doc::String,fun::String,block::CSTParser.EXPR) = new(doc,fun,block)
+    doc_fun_block(fun::String, block::CSTParser.EXPR) = new("", fun, block)
+    doc_fun_block(doc::Nothing,fun::String, block::CSTParser.EXPR) = new("", fun, block);
+
+end
+
+end
+
 struct doc_fun
     doc::Union{String, Nothing}
     fun::String
@@ -26,6 +44,7 @@ function dfbs_to_dfs(dir)
                 pnt+=1
                 if pnt > preall
                     # reallocate
+                    println("reallocating $(preall) to $(preall + count*10)")
                     preall += count*10
                     tmp = Array{doc_fun,1}(undef, preall)
                     tmp[1:(pnt-1)] = dfs
@@ -33,6 +52,7 @@ function dfbs_to_dfs(dir)
                     tmp = nothing
                 end
             end
+            println("finished file $file")
         end
 	end
     dfs[1:(pnt-1)]

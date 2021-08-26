@@ -29,11 +29,21 @@ function process_docs(docs, pre)
     mat, lexi
 end
 
-function apply(x, arr)
+function apply(x::String, arr)
     for foo in arr
         x = foo(x)
     end
     x
+end
+function apply(dfsa::Array{doc_fun, 1}, arr)
+    apply([x.doc for x in dfsa], arr)
+end
+function apply(dfs::Array{String, 1}, arr)
+    res = []
+    for str in dfs
+        push!(res, apply(str, arr))
+    end
+    res
 end
 
 function lexi_to_dict(lexi)

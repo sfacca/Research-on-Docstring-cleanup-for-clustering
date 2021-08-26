@@ -11,3 +11,19 @@ end
 function is_not_numeric(word)
     return tryparse(Float64, word) == nothing
 end
+
+function rm_containing(strs)
+
+end
+
+function rm_special(arr::String)
+    r = r"[a]"
+    r.pattern = "[$arr]"
+    filter((x)->(!occursin(r, x)), arr)
+end
+
+function rm_graph()
+    rm_special("─")
+end
+
+

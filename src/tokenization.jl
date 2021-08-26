@@ -1,6 +1,6 @@
 # generic application of tokenizers
 
-function tokenize(tokenizer)
+function _tokenize(tokenizer)
     (x)->(tokenizer(x))
 end
 
