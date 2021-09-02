@@ -1,3 +1,7 @@
+function make_dmat(doc_mat::SparseMatrixCSC{T,Int64}) where {T}
+    make_dmat(Matrix(doc_mat))
+end
+
 
 function make_dmat(doc_mat)
     convert(
@@ -108,7 +112,7 @@ end
 function global_centroid(mat)
     # mat is unweighted -> global centroid is vector of means
     # we dont care about columns so we can save time by just iterating over nzval/rowval
-    res = zeros(mat.n)
+    res = zeros(mat.m)
     for i in 1:length(mat.nzval)
         res[mat.rowval[i]] += mat.nzval[i]
     end

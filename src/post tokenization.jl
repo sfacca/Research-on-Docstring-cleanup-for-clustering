@@ -19,7 +19,7 @@ end
 function rm_special(arr::String)
     r = r"[a]"
     r.pattern = "[$arr]"
-    filter((x)->(!occursin(r, x)), arr)
+    (bag)->(filter((x)->(!occursin(r, x)), bag))
 end
 
 function rm_graph()

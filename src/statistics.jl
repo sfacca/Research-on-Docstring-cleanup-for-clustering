@@ -33,23 +33,124 @@ end
 function kres_silhouette(kres, dmat)
     mean(silhouettes(kres.assignments, kres.counts, dmat))
 end
-
+#=
 function calinski_harabasz(kres, mat)
     #=
+    https://medium.com/@haataa/how-to-measure-clustering-performances-when-there-are-no-ground-truth-db027e9a871c
+    Advantages
+    The score is higher when clusters are dense and well separated, which relates to a standard concept of a cluster.
+    The score is fast to compute.
+    Drawbacks
+    The Calinski-Harabasz index is generally higher for convex clusters than other concepts of clusters, such as density based clusters like those obtained through DBSCAN.
+
+
+
     (sum(cluster.counts(sq dist(centroide cluster, centroide globale)))) / k-1
     /
     sum(sq dist(documento, centroide cluster))/num docs - k    
     =#
+    distance = SqEuclidean()
+
     c = global_centroid(mat)
     BGSS = 0
     for cluster in 1:length(kres.counts)
-        BGGS += kres.counts[cluster]*SqEuclidean(kres.centers[:, cluster],c)
+        BGSS += kres.counts[cluster]*distance(kres.centers[:, cluster],c)
     end
 
     WGSS = 0
-    for document in 1:mat.m
-        WGSS += SqEuclidean(kres.centers[:, kres.assignments[document]], document)
+    for document in 1:mat.n
+        WGSS += distance(kres.centers[:, kres.assignments[document]], mat[:,document])
     end
-
+    #num    num                     num     wordnum        number of clusters
     (BGSS/(length(kres.counts)-1))*(WGGS/(mat.m - length(kres.counts)))
 end
+=#
+
+function calinski_harabasz(kres, mat, distance = SqEuclidean())
+    #=
+     https://ethen8181.github.io/machine-learning/clustering_old/clustering/clustering.html
+    SS_b/SS_w * (N - k)/(k -1)
+    N = number of documents 
+    k = number of clusters
+
+    SS_b = tss - SS_w
+    tss =  (sum of) squared distance of all the data points from the dataset’s centroid
+    SS_w = sum_clusters(sum_document_in_cluster(sqdist(document, cluster centroid)))
+    
+    =#
+
+    SS_w = zeros(length(kres.counts))
+    for document in 1:length(kres.assignments)
+        SS_w[kres.assignments[document]] += distance(mat[:,document], kres.centers[:,kres.assignments[document]])
+    end
+    SS_w = sum(SS_w)
+
+    c = global_centroid(mat)
+    tss = sum([distance(c, mat[:,i]) for i in 1:mat.n])
+    SS_b = tss - SS_w
+
+    (SS_b / SS_w) * ((mat.n - length(kres.counts))/(length(kres.counts)-1))
+end
+
+function clusters_distance_to_center(kres, data, distance)
+    ds = zeros(data.n)
+    for i in 1:data.n 
+        ds[i] = distance(kres.centers[:,kres.assignments[i]], data[:,i])
+    end
+    ds
+end
+
+function clusters_custom_distortion(kres, data, distance)
+    sum(clusters_distance_to_center(kres, data, distance))/data.n
+end
+
+function cluster_mean_distortion(kres, data)
+    clusters_custom_distortion(kres, data, SqEuclidean())
+end
+
+function dunn_index(kres, dmat)
+    dmin = nothing
+    srp = sortperm(reshape(dmat, (*(size(dmat)...))))
+    colsize = size(dmat,2)
+    len = length(srp)
+    # find dmin = minimum distance(x,y) where x and y are NOT in the same cluster
+    for i in 1:len
+        col = _findcolumn(srp[i], colsize)
+        row = Int((colsize*col)-(srp[i]))
+        if kres.assignment[col] != kres.assignment[row]
+            dmin = dmat[srp[i]]
+            break
+        end
+    end
+
+    if isnothing(dmin)
+        throw("failed to find dmin")
+    end
+    # find dmax = maximum distance(x,y) where x and y are assigned to the same cluster
+    dmax = nothing
+
+    for i in 0:(len-1)
+        col = _findcolumn(srp[len-i], colsize)
+        row = Int((colsize*col)-(srp[len-i]))
+        if kres.assignment[col] == kres.assignment[row]
+            dmax = dmat[srp[len-i]]
+            break
+        end
+    end
+    if isnothing(dmax)
+        throw("failed to find dmax")
+    end
+
+    # calc dmin/dmax
+    dmin/dmax
+end
+
+function _findcolumn(index, colsize)
+    Int(div(index, colsize, RoundUp))
+end
+
+function mean(x::Array{T,1}) where {T<:Number}
+    sum(x)/length(x)
+end
+
+
